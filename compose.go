@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -24,7 +25,8 @@ func toSession0(a *arena, opts *Options) *fwpmSession0 {
 			Name:        toUint16(a, opts.Name),
 			Description: toUint16(a, opts.Description),
 		},
-		TxnWaitTimeoutMillis: uint32(opts.TransactionStartTimeout.Milliseconds()),
+		// Changed from TransactionStartTimeout.Milliseconds() for compatibility with go1.12
+		TxnWaitTimeoutMillis: uint32(opts.TransactionStartTimeout / time.Millisecond),
 	}
 	if opts.Dynamic {
 		ret.Flags = fwpmSession0FlagDynamic
@@ -161,7 +163,7 @@ func toCondition0(a *arena, ms []*Match, ft fieldTypes) (array *fwpmFilterCondit
 
 		typ, val, err := toValue0(a, m.Value, ft[m.Field])
 		if err != nil {
-			return nil, fmt.Errorf("invalid match %v: %w", m, err)
+			return nil, fmt.Errorf("invalid match %v: %v", m, err)
 		}
 
 		*c = fwpmFilterCondition0{
